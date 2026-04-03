@@ -1,0 +1,120 @@
+{
+  "transitionList": [
+    {
+      "name": "start_xtl_system",
+      "destState": {
+        "xtl_state": "pos(max,board(col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),no_winner))."
+      }
+    },
+    {
+      "name": "place",
+      "params": {
+        "i": "4",
+        "j": "6",
+        "player": "red"
+      },
+      "destState": {
+        "xtl_state": "pos(min,board(col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),no_winner))."
+      }
+    },
+    {
+      "name": "auto_play_minimax",
+      "params": {
+        "action": "place(7,6,yellow)",
+        "value": "0",
+        "depth": "2"
+      },
+      "destState": {
+        "xtl_state": "pos(max,board(col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,min),no_winner))."
+      }
+    },
+    {
+      "name": "auto_play",
+      "params": {
+        "action": "place(3,6,red)"
+      },
+      "destState": {
+        "xtl_state": "pos(min,board(col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,min),no_winner))."
+      }
+    },
+    {
+      "name": "auto_play_minimax",
+      "params": {
+        "action": "place(3,5,yellow)",
+        "value": "0",
+        "depth": "2"
+      },
+      "destState": {
+        "xtl_state": "pos(max,board(col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,min,max),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,min),no_winner))."
+      }
+    },
+    {
+      "name": "auto_play",
+      "params": {
+        "action": "place(2,6,red)"
+      },
+      "destState": {
+        "xtl_state": "pos(min,board(col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,e__,min,max),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,min),no_winner))."
+      }
+    },
+    {
+      "name": "auto_play_minimax",
+      "params": {
+        "action": "place(3,4,yellow)",
+        "value": "1",
+        "depth": "2"
+      },
+      "destState": {
+        "xtl_state": "pos(max,board(col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,min,min,max),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,min),no_winner))."
+      }
+    },
+    {
+      "name": "auto_play",
+      "params": {
+        "action": "place(5,6,red)"
+      },
+      "destState": {
+        "xtl_state": "pos(min,board(col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,min,min,max),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,e__,e__,max),col(e__,e__,e__,e__,e__,e__),col(e__,e__,e__,e__,e__,min),max))."
+      }
+    }
+  ],
+  "machineOperationInfos": {
+    "auto_play_minimax": {
+      "operationName": "auto_play_minimax",
+      "parameterNames": [
+        "depth",
+        "value",
+        "action"
+      ],
+      "topLevel": true,
+      "type": "XTL"
+    },
+    "auto_play": {
+      "operationName": "auto_play",
+      "parameterNames": [
+        "action"
+      ],
+      "topLevel": true,
+      "type": "XTL"
+    },
+    "place": {
+      "operationName": "place",
+      "parameterNames": [
+        "i",
+        "j",
+        "player"
+      ],
+      "topLevel": true,
+      "type": "XTL"
+    }
+  },
+  "metadata": {
+    "fileType": "Trace",
+    "formatVersion": 6,
+    "savedAt": "2026-04-03T15:00:16.184022Z",
+    "creator": "Simulation: HYPOTHESIS_TEST; SIGNIFICANCE : 0.05, PROBABILITY : 0.55, MAX_STEPS_BEFORE_PROPERTY : 0, EXECUTIONS : 3, PREDICATE : 1 = STRING_TO_INT(STATE_PROPERTY(\"HEURISTIC\")), STEPS_PER_EXECUTION : 100, HYPOTHESIS_CHECKING_TYPE : TWO_TAILED, CHECKING_TYPE : PREDICATE_FINAL",
+    "proB2KernelVersion": "4.15.2-SNAPSHOT",
+    "proBCliVersion": "1.16.0-nightly",
+    "modelName": "Connect4_mcts"
+  }
+}

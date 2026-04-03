@@ -1,0 +1,30 @@
+{
+  "activations": [
+    {
+      "id": "start_xtl_system",
+      "execute": "start_xtl_system",
+      "activating": ["SETUP_CHESS_BOARD"]
+    },
+    {
+      "id": "SETUP_CHESS_BOARD",
+      "execute": "SETUP_CHESS_BOARD",
+      "after": 100,
+      "activating": ["auto_play"]
+    },
+    {
+      "id": "auto_play",
+      "execute": "auto_play",
+      "after": 200,
+      "activating": ["auto_play"]
+    }
+  ],
+  "metadata": {
+    "fileType": "Simulation",
+    "formatVersion": 4,
+    "savedAt": "2025-10-27T08:26:58.373748Z",
+    "creator": "User",
+    "proB2KernelVersion": "4.15.1-SNAPSHOT",
+    "proBCliVersion": "1.15.1-nightly (b40648bf0549d89970cc469b0a1f98ca89b01923)",
+    "modelName": null
+  }
+}

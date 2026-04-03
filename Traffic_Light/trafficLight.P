@@ -1,0 +1,23 @@
+start(lights(red,red)).
+
+trans(tl_peds_green,lights(red,red),lights(green,red)).
+trans(tl_peds_red,lights(green,red),lights(red,red)).
+trans(switch_tl_cars(NY),lights(red,Y),lights(red,NY)) :- switch_tl_cars(Y,NY).
+
+prop(lights(X,_),'='(tl_peds,X)).
+prop(lights(_,X),'='(tl_cars,X)).
+prop(lights(P,C),unsafe) :- P \= red, C \= red.
+
+switch_tl_cars(red,red_yellow).
+switch_tl_cars(red_yellow,green).
+switch_tl_cars(green,yellow).
+switch_tl_cars(yellow,red).
+
+prob_pragma_string('VISB_SVG_FILE','traffic_light.svg').
+prob_pragma_string('VISB_DEFINITIONS_FILE','trafficLight.def').
+
+trans_prop(tl_peds_red,param_names([])).
+trans_prop(tl_peds_green,param_names([])).
+trans_prop(switch_tl_cars,param_names([colour])).
+
+%prob_pragma_string('SCOPE','STATE_PROPERTY("tl_cars") /= "red_yellow"').

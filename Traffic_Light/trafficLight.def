@@ -1,0 +1,15 @@
+DEFINITIONS 
+    "LibraryMeta.def";
+    VISB_SVG_UPDATES == (
+        rec(`id`: "cars_red", fill: IF STATE_PROPERTY("tl_cars") : {"red", "red_yellow"} THEN "red" ELSE "black" END),
+        rec(`id`: "cars_yellow_1", fill: IF STATE_PROPERTY("tl_cars") : {"yellow", "red_yellow"} THEN "yellow" ELSE "black" END),
+        rec(`id`: "cars_green", fill: IF STATE_PROPERTY("tl_cars") = "green" THEN "green" ELSE "black" END),
+        rec(`id`: "peds_red", fill: IF STATE_PROPERTY("tl_peds") = "red" THEN "red" ELSE "black" END),
+        rec(`id`: "peds_green", fill: IF STATE_PROPERTY("tl_peds") = "green" THEN "green" ELSE "black" END)
+    );
+
+    VISB_SVG_EVENTS == (
+        {i•i:{"cars_red","cars_yellow_1","cars_green"} | rec(`id`: i, event: "switch_tl_cars")},
+        rec(`id`: "peds_red", event: "tl_peds_green"),
+        rec(`id`: "peds_green", event: "tl_peds_red")
+    );

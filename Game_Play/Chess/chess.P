@@ -1,0 +1,789 @@
+% ENCODING OF CHESS RULES
+% for use with ProB - XTL mode
+% Michael Leuschel, Dec. 2016 - 2024
+
+% options
+take_depth_into_account(true).
+randomise_moves(true).
+use_mcts_api(false).
+use_directed_mc(false). % try and find goal_position
+
+% comment out if you want auto_play moves to be computed for certain states only
+auto_play_for(_) :- fail.
+%auto_play_for(white).
+%auto_play_for(black).
+
+% comment out/in the Mini-Max depths that should be computed:
+%enum_depth(2).
+%enum_depth(3).
+enum_depth(4).
+%enum_depth(5).
+%enum_depth(6).
+
+
+% starting position for XTL
+test_position(1,white,B) :-
+   empty_board(E),
+   set_board(E,3,3,king(white),B1),
+   set_board(B1,8,8,king(black),B2),
+   set_board(B2,1,1,rook(white),B3),
+   set_board(B3,1,2,rook(white),B).
+test_position(2,white,B) :-
+   empty_board(E),
+   set_board(E,3,3,king(white),B1),
+   set_board(B1,8,8,king(black),B2),
+   set_board(B2,1,1,queen(white),B3),
+   set_board(B3,1,2,rook(white),B).
+test_position(3,white,B) :- % Does work now: Patt is avoided by Mini-Max; but requires depth 6 (solving time 2 seconds)
+   empty_board(E),
+   set_board(E,3,3,king(white),B1),
+   set_board(B1,8,8,king(black),B2),
+   set_board(B2,1,1,rook(white),B3),
+   set_board(B3,1,2,rook(white),B4),
+   set_board(B4,8,6,knight(white),B).
+test_position(4,white,B) :- % ditto: does work now, patt avoided, solution found with depth 4
+   empty_board(E),
+   set_board(E,4,6,knight(white),B1),
+   set_board(B1,8,8,king(black),B2),
+   set_board(B2,6,5,knight(white),B3),
+   set_board(B3,5,5,knight(white),B4),
+   set_board(B4,8,6,king(white),B).
+test_position(5,white,B) :- % promotion check
+   empty_board(E),
+   set_board(E,3,3,king(white),B1),
+   set_board(B1,8,8,king(black),B2),
+   set_board(B2,1,7,pawn(white),B3),
+   set_board(B3,2,6,pawn(white),B).
+test_position(6,white,B) :- % promotion check
+   empty_board(E),
+   set_board(E,7,5,king(white),B1),
+   set_board(B1,3,8,king(black),B2),
+   set_board(B2,1,7,pawn(white),B3),
+   set_board(B3,2,6,pawn(white),B).
+test_position(7,black,B8) :- % https://www.adventofchess.com/year/2024/day/1
+  set_start_position(Board), 
+  set_board(Board,7,3,king(white),B1),
+  set_board(B1,6,3,pawn(white),B2),
+  set_board(B2,4,5,pawn(black),B3),
+  set_board(B3,6,5,queen(black),B4),
+  set_board(B4,5,1,empty,B5),
+  set_board(B5,6,2,empty,B6),
+  set_board(B6,4,8,empty,B7),
+  set_board(B7,4,7,empty,B8).
+
+
+% https://gameknot.com/chess-puzzles.pl
+% Puzzle #16189: White to move, mate in 2 moves
+% puzzle solved with depth 4 in 0.3 seconds when using compiled version of chess.P
+set_puzzle(1,white) -->
+   set_dcg(1,2,pawn(white)),
+   set_dcg(2,5,rook(white)),
+   set_dcg(4,4,pawn(white)),
+   set_dcg(5,3,pawn(white)),
+   set_dcg(5,3,pawn(white)),
+   set_dcg(5,5,knight(white)),
+   set_dcg(6,2,pawn(white)),
+   set_dcg(6,6,pawn(white)),
+   set_dcg(7,1,king(white)),
+   set_dcg(8,2,pawn(white)),
+   set_dcg(8,6,queen(white)),
+   set_dcg(1,5,pawn(black)),
+   set_dcg(1,6,rook(black)),
+   set_dcg(1,7,queen(black)),
+   set_dcg(4,5,pawn(black)),
+   set_dcg(5,6,pawn(black)),
+   set_dcg(6,7,pawn(black)),
+   set_dcg(7,6,pawn(black)),
+   set_dcg(8,7,pawn(black)),
+   set_dcg(7,8,rook(black)),
+   set_dcg(8,8,king(black)).
+set_puzzle(2,white) -->  % https://gameknot.com/chess-puzzles.pl, white to move, mate in 3
+   set_dcg(1,2,pawn(white)),
+   set_dcg(2,2,pawn(white)),
+   set_dcg(3,2,pawn(white)),
+   set_dcg(6,2,pawn(white)),
+   set_dcg(8,2,pawn(white)),
+   set_dcg(4,2,queen(white)),
+   set_dcg(6,3,bishop(white)),
+   set_dcg(4,1,rook(white)),
+   set_dcg(8,1,rook(white)),
+   set_dcg(3,1,king(white)),
+   set_dcg(1,6,pawn(black)),
+   set_dcg(2,7,pawn(black)),
+   set_dcg(6,7,pawn(black)),
+   set_dcg(7,7,pawn(black)),
+   set_dcg(8,7,pawn(black)),
+   set_dcg(5,8,king(black)),
+   set_dcg(1,8,rook(black)),
+   set_dcg(8,8,rook(black)),
+   set_dcg(3,8,bishop(black)),
+   set_dcg(6,8,bishop(black)),
+   set_dcg(6,6,queen(black)),
+   set_dcg(3,6,knight(black)).
+set_puzzle(3,black) -->  % not really a puzzle, illustrating horizon problem; with depth of 2 the min-max sacrifices rook
+   set_dcg(4,3,pawn(white)),
+   set_dcg(5,3,pawn(white)),
+   set_dcg(6,3,pawn(white)),
+   set_dcg(7,3,pawn(white)),
+   set_dcg(8,3,pawn(white)),
+   set_dcg(4,7,pawn(white)),
+   set_dcg(8,1,king(white)),
+   set_dcg(2,7,pawn(black)),
+   set_dcg(3,6,pawn(black)),
+   set_dcg(6,7,pawn(black)),
+   set_dcg(7,7,pawn(black)),
+   set_dcg(8,7,pawn(black)),
+   set_dcg(1,6,king(black)),
+   set_dcg(1,2,rook(black)).
+set_puzzle(4,white) -->  % Puzzle 18320
+   set_dcg(5,5,knight(white)),
+   set_dcg(2,8,rook(white)),
+   set_dcg(1,6,queen(white)),
+   set_dcg(1,8,king(white)),
+   set_dcg(4,4,knight(black)),
+   set_dcg(3,7,king(black)),
+   set_dcg(2,7,knight(black)).
+
+% set the original chessboar initial position
+set_start_position(P) :- empty_board(E),set_start_position(1,E,P).
+set_start_position(9) -->
+   set_dcg(1,1,rook(white)),   set_dcg(1,8,rook(black)),
+   set_dcg(2,1,knight(white)), set_dcg(2,8,knight(black)),
+   set_dcg(3,1,bishop(white)), set_dcg(3,8,bishop(black)),
+   set_dcg(4,1,queen(white)),  set_dcg(4,8,queen(black)),
+   set_dcg(5,1,king(white)),   set_dcg(5,8,king(black)),
+   set_dcg(6,1,bishop(white)), set_dcg(6,8,bishop(black)),
+   set_dcg(7,1,knight(white)), set_dcg(7,8,knight(black)),
+   set_dcg(8,1,rook(white)),   set_dcg(8,8,rook(black)).
+set_start_position(I) --> {I<9},
+   set_dcg(I,2,pawn(white)),
+   set_dcg(I,7,pawn(black)),
+   {I1 is I+1},
+   set_start_position(I1).
+   
+set_dcg(I,J,F,B,NB) :- set_board(B,I,J,F,NB).
+
+% initial state for XTL
+start(initialise).
+
+% utility to setup valid position with Info fields
+setup_position(Player,Board,pos(Player,Board,Info)) :-
+   Info = info(WhiteKing,BlackKing),
+   compute_king_positions(Board,WhiteKing,BlackKing).
+compute_king_positions(Board,WhiteKing,BlackKing) :- WhiteKing=(I1,J1), BlackKing=(I2,J2),
+   get_board_any(Board,I1,J1,king(white)),
+   get_board_any(Board,I2,J2,king(black)).
+
+% Transitions for XTL:
+trans('SETUP_CHESS_BOARD',initialise,Pos) :-
+  set_start_position(Board), setup_position(white,Board,Pos).
+trans('PUZZLE'(Nr),initialise,Pos) :-
+  empty_board(E), set_puzzle(Nr,Player,E,B), setup_position(Player,B,Pos).
+trans('TEST'(Nr),initialise,Pos) :-
+  test_position(Nr,Player,Board), setup_position(Player,Board,Pos).
+trans(Trans,State,State2,[description(Desc)]) :- 
+   move(State,Trans,State2),
+   describe_move(Trans,Desc).
+   %State=pos(Player,_,_),State2=pos(_,Board,_), \+ in_check(Board,Player).
+:- if((\+ use_directed_mc(true) , \+ use_mcts_api(true))).
+trans(auto_play(Depth,Value,Action),State,State2,[description(Desc)]) :-
+   State = pos(Player,_,_),
+   auto_play_for(Player),
+   enum_depth(Depth),
+   format('Computing Alpha-Beta Move for depth=~w~n',[Depth]),
+   statistics(walltime,_),
+   (value(State,Depth,Value,Action,State2)
+    -> statistics(walltime,[_,Delta]),
+       format('Move found in ~w ms: ~w, value=~w~n',[Delta,Action,Value])),
+   describe_move(Action,Desc0),
+   ajoin(['AUTO PLAY: ',Desc0],Desc).
+:- endif.
+
+% XTL State Properties:
+prop(pos(P,_,_),'='(player_to_move,P)).
+prop(State,Prop) :- State=pos(Colour,Board,_),
+   in_check(Board,Colour),
+   (move(State,_,_) -> Prop='CHECK_TO'(Colour) ; Prop = 'CHECK_MATE_TO'(Colour)).
+prop(S,'='(utility,V)) :- utility(S,V).
+prop(S,'='(heuristic,V)) :- heuristic_function_result(S,V).
+prop(pos(_,_,Info),'='(king(C),(I,J))) :- get_king_from_info(C,Info,I,J).
+prop(pos(_,Board,_),'='(Figure,(Colour,I,J))) :-
+   between(1,8,I), between(1,8,J),
+   get_board(Board,I,J,Piece),
+   functor(Piece,Figure,_),
+   get_colour(Piece,Colour),
+   Piece \= empty.
+prop(none(pos(Player,_,_)),'WINNER'(OP)) :- other_colour(Player,OP).
+
+:- if(use_directed_mc(true)).
+prop(Pos,unsafe) :- goal_position(Pos).
+
+% define the following as target position
+% one needs to setup the chess board and then refocus the animator and then use directed model checking
+% https://www.adventofchess.com/year/2024/day/1
+goal_position(pos(black,
+ brd(brd(rook(white),pawn(white),empty,empty,empty,empty,pawn(black),rook(black)),
+ brd(knight(white),pawn(white),empty,empty,empty,empty,pawn(black),knight(black)),
+ brd(bishop(white),pawn(white),empty,empty,empty,empty,pawn(black),bishop(black)),
+ brd(queen(white),pawn(white),empty,empty,pawn(black),empty,empty,empty),
+ brd(empty,pawn(white),empty,empty,empty,empty,pawn(black),king(black)),
+ brd(bishop(white),empty,pawn(white),empty,queen(black),empty,pawn(black),bishop(black)),
+ brd(knight(white),pawn(white),king(white),empty,empty,empty,pawn(black),knight(black)),
+ brd(rook(white),pawn(white),empty,empty,empty,empty,pawn(black),rook(black))),_)).
+
+delta_to_goal(pos(Player,Board,_),Delta) :- goal_position(pos(Player2,Board2,_)),
+   delta_between_pos(Board,Board2,Delta).
+
+% compute difference between two positions; useful for directed model checking:
+delta_between_pos(B1,B2,Delta) :- 
+   functor(B1,brd,_), 
+   functor(B2,brd,_), !,
+   B1 =.. [brd|A1],
+   B2 =.. [brd|A2],
+   l_delta(A1,A2,Delta).
+delta_between_pos(B,B,Delta) :- !, Delta=0.
+delta_between_pos(_,_,1).
+
+l_delta([],_,0).
+l_delta([H|T],[H2|T2],Delta) :- delta_between_pos(H,H2,D1),
+  l_delta(T,T2,D2), Delta is D1+D2.
+
+% XTL Heuristic Function (for directed Model Checking, colouring state space visualizations,...)
+heuristic_function_result(S,V) :- delta_to_goal(S,V). %utility(S,V).
+:- else.
+heuristic_function_result(S,V) :-  utility(S,V).
+:- endif.
+heuristic_function_active.
+
+%------------------------ 
+
+% definitions for the MCTS API:
+% to use it we should remove the auto_play above
+:- if(use_mcts_api(true)).
+prob_game_info('GAME_PLAYER',S,V) :- (S=pos(white,_,_) -> V=max ; V=min).
+prob_game_info('GAME_VALUE',S,V) :- utility(S,V).
+prob_game_info('GAME_OVER',S,V) :- (move(S,_,_) -> V=false ; V=true).
+prob_game_info('GAME_MCTS_RUNS',_,V) :- V=100.
+:- endif.
+
+
+% XTL TK State Viewer Animation Images and Functions
+% first pieces on white background
+animation_image(Nr,S) :- animation_image(_,_,Nr,S).
+animation_image(king(white),0,1,   '../B/Puzzles/Queens/ChessPieces/Chess_kll45.gif').
+animation_image(king(black),0,2,   '../B/Puzzles/Queens/ChessPieces/Chess_kdl45.gif').
+animation_image(rook(white),0,3,   '../B/Puzzles/Queens/ChessPieces/Chess_rll45.gif').
+animation_image(rook(black),0,4,   '../B/Puzzles/Queens/ChessPieces/Chess_rdl45.gif').
+animation_image(empty,0,5,         '../B/Puzzles/Queens/ChessPieces/Chess_emptyl45.gif').
+animation_image(knight(white),0,6, '../B/Puzzles/Queens/ChessPieces/Chess_nll45.gif').
+animation_image(knight(black),0,7, '../B/Puzzles/Queens/ChessPieces/Chess_ndl45.gif').
+animation_image(pawn(white),0,8,   '../B/Puzzles/Queens/ChessPieces/Chess_pll45.gif').
+animation_image(pawn(black),0,9,   '../B/Puzzles/Queens/ChessPieces/Chess_pdl45.gif').
+animation_image(queen(white),0,10, '../B/Puzzles/Queens/ChessPieces/Chess_qll45.gif').
+animation_image(queen(black),0,11, '../B/Puzzles/Queens/ChessPieces/Chess_qdl45.gif').
+animation_image(bishop(white),0,12,'../B/Puzzles/Queens/ChessPieces/Chess_bll45.gif').
+animation_image(bishop(black),0,13,'../B/Puzzles/Queens/ChessPieces/Chess_bdl45.gif').
+% now pieces on black background
+animation_image(king(white),1,21,'../B/Puzzles/Queens/ChessPieces/Chess_kld45.gif').
+animation_image(king(black),1,22,'../B/Puzzles/Queens/ChessPieces/Chess_kdd45.gif').
+animation_image(rook(white),1,23,'../B/Puzzles/Queens/ChessPieces/Chess_rld45.gif').
+animation_image(rook(black),1,24,'../B/Puzzles/Queens/ChessPieces/Chess_rdd45.gif').
+animation_image(empty,1,25,'../B/Puzzles/Queens/ChessPieces/Chess_emptyd45.gif').
+animation_image(knight(white),1,26,'../B/Puzzles/Queens/ChessPieces/Chess_nld45.gif').
+animation_image(knight(black),1,27,'../B/Puzzles/Queens/ChessPieces/Chess_ndd45.gif').
+animation_image(pawn(white),1,28,'../B/Puzzles/Queens/ChessPieces/Chess_pld45.gif').
+animation_image(pawn(black),1,29,'../B/Puzzles/Queens/ChessPieces/Chess_pdd45.gif').
+animation_image(queen(white),1,30,'../B/Puzzles/Queens/ChessPieces/Chess_qld45.gif').
+animation_image(queen(black),1,31,'../B/Puzzles/Queens/ChessPieces/Chess_qdd45.gif').
+animation_image(bishop(white),1,32,'../B/Puzzles/Queens/ChessPieces/Chess_bld45.gif').
+animation_image(bishop(black),1,33,'../B/Puzzles/Queens/ChessPieces/Chess_bdd45.gif').
+% special images:
+%animation_image(king_in_check(_),0,40,'../B/Puzzles/Queens/ChessPieces/Chess_krl45.gif').
+%animation_image(king_in_check(_),1,40,'../B/Puzzles/Queens/ChessPieces/Chess_krd45.gif').
+animation_image(select,_,-1,'../B/Puzzles/Queens/ChessPieces/Chess_emptyg45.gif'). % empty green
+animation_image(select_take,_,-2,'../B/Puzzles/Queens/ChessPieces/Chess_emptyXg45.gif'). % empty green
+%   SET_PREF_TK_CUSTOM_STATE_VIEW_PADDING == 1;
+
+xget_animation_image(king(Player),pos(Player,Board,Info),Mod,Img) :- % use red king if in check
+    \+ king_not_in_check(Player,Board,Info),!,
+    animation_image(king_in_check(Player),Mod,Img,_).
+get_animation_image(Fig,_,Mod,Img) :- animation_image(Fig,Mod,Img,_).
+
+animation_function_result(none(Pos),Matrix) :- !, 
+   Pos = pos(Player,Board,Info), other_colour(Player,OP),
+   animation_function_result(pos(OP,Board,Info),Matrix).
+animation_function_result(pos(Player,Board,Info),Matrix) :- 
+   (auto_play_for(Player)
+    -> (Player = white -> Symb00 = '+' ; Symb00 = '-')
+     ; (Player = white -> Symb00 = 'w' ; Symb00 = 'b')
+    ),
+   Matrix = [ ((0,0),Symb00), ((1,0),'8'), ((2,0),'7'), ((3,0),'6'), ((4,0),'5'),
+              ((5,0),'4'), ((6,0),'3'), ((7,0),'2'), ((8,0),'1') | Matrix1],
+   Matrix1 = [ ((0,1),' A '), ((0,2),' B '), ((0,3),' C '), ((0,4),' D '),
+              ((0,5),' E '), ((0,6),' F '), ((0,7),' G '), ((0,8),' H ') | Matrix2],
+   findall(((J,I),Img),
+             (between(1,8,J), between(1,8,I), J8 is 9-J, get_board(Board,I,J8,Fig),
+              Mod is (I+J) mod 2,
+              get_animation_image(Fig,pos(Player,Board,Info),Mod,Img)
+              ),Matrix2). %  , print(Matrix),nl.
+
+animation_image_right_click_transition(0,0,TT) :- !, TT = auto_play(Depth,_,move(_,_,_,_,_,_)),
+  (Depth=6 ; Depth=4 ; Depth = 3 ; Depth=2).
+animation_image_right_click_transition(FromRow,FromCol,TransitionTemplate) :- 
+   between(1,8,FromCol),  between(1,8,FromRow), 
+   I = FromCol, J is 9-FromRow, % translate state viewer coordinates to chess coordinates
+   TransitionTemplate = move(_Piece,I,J,_,_I2,_J2).
+animation_image_click_transition(FromY,FromX,ToY,ToX,[TransitionTemplate,auto_play(_,_,A)],ImageNr) :-
+   between(1,8,FromX),  between(1,8,FromY), 
+   I = FromX, J is 9-FromY, I2 = ToX, J2 is 9-ToY,
+   (Take=false, ImageNr = -1 ; dif(Take,false),ImageNr = -2),
+   TransitionTemplate = move(_Piece,I,J,Take,I2,J2). %, dif(A,none(_)).
+
+% ---------------------------------------
+
+% make a move and alternate player
+move(pos(Colour,Board,Info),move(Piece,I,J,Take,I2,J2),pos(Other,NewBoard,Info2)) :- 
+   move(Board,Piece,Colour,I,J,I2,J2,Take,NewBoard),
+   update_kings_info(Piece,I2,J2,Info,Info2),
+   king_not_in_check(Colour,NewBoard,Info2), 
+   other_colour(Colour,Other).
+
+describe_move(move(Piece,I,J,Take,I2,J2),DescMove) :-
+   Piece =.. [P,Colour],
+   ajoin(['Move ',Colour,' ',P,' from (',I,',',J,') to (',I2,',',J2,')'],DescMove0),
+   (Take =.. [T,TColour]
+    -> ajoin([DescMove0,' and take ',TColour,' ',T],DescMove)
+     ; DescMove=DescMove0).
+describe_move(_,'').
+
+update_kings_info(king(black),I2,J2,info(KW,_),info(KW,(I2,J2))) :- !.
+update_kings_info(king(white),I2,J2,info(_,KB),info((I2,J2),KB)) :- !.
+update_kings_info(_,_,_,Info,Info).
+
+moving_player_in_check(pos(Col,Board,Info)) :-
+   get_king_from_info(Col,Info,I,J),
+   in_check(Board,I,J,Col).
+
+king_not_in_check(Colour,Board,Info) :-
+    get_king_from_info(Colour,Info,I,J),
+    \+ in_check(Board,I,J,Colour).
+
+get_king_from_info(black,info(_,(I,J)),I,J).
+get_king_from_info(white,info((I,J),_),I,J).
+
+% true if a move takes a king
+move_takes_king(move(_Piece,_I,_J,king(_),_I2,_J2)).
+
+
+utility(pos(_,Board,_),H) :- heuristic(Board,H).
+
+player(pos(P,_,_),P).
+
+pretty_print(pos(_,Board,_)) :- between(1,8,Col),
+   arg(Col,Board,Column),
+   Column =.. [brd|Args],
+   maplist(pp2,Args,PPArgs),
+   format('~w: ~w~n',[Col,PPArgs]),fail.
+pretty_print(pos(P,_,_)) :- format('TO MOVE: ~w~n',[P]).
+
+pp2(Fig,Res) :- pp(Fig,PP), atom_concat(PP,' |',PP2), atom_concat(' ',PP2,Res).
+
+pp(king(black),'KB').
+pp(king(white),'KW').
+pp(rook(white),'RW').
+pp(rook(black),'RB').
+pp(pawn(white),'PW').
+pp(pawn(black),'PB').
+pp(queen(white),'QW').
+pp(queen(black),'QB').
+pp(bishop(white),'BW').
+pp(bishop(black),'BB').
+pp(knight(white),'KW').
+pp(knight(black),'KB').
+pp(empty,'  ').
+
+% a simple heuristic to sum up the value of the pieces
+heuristic(Board,H) :- findall(V, (get_board_any(Board,_,_,P), fig_value(P,V)), L),
+  sumlist(L,H).
+
+fig_value(king(C),Res) :- assign(C,1000,Res).
+fig_value(queen(C),Res) :- assign(C,9,Res).
+fig_value(rook(C),Res) :- assign(C,5,Res).
+fig_value(bishop(C),Res) :- assign(C,3,Res).
+fig_value(knight(C),Res) :- assign(C,3,Res).
+fig_value(pawn(C),Res) :- assign(C,1,Res).
+fig_value(empty,0).
+
+assign(white,C,C).
+assign(black,C,R) :- R is -(C).
+
+other_colour(white,black).
+other_colour(black,white).
+
+
+empty_board(brd(E,E,E,E, E,E,E,E)) :- empty_brd(E).
+empty_brd(brd(empty,empty,empty,empty,empty,empty,empty,empty)).
+
+
+get_board_any(Board,I,J,Res) :- between(1,8,I), between(1,8,J),
+  get_board(Board,I,J,Res).
+
+get_board(Board,I,J,Res) :-
+   arg(I,Board,BI),
+   arg(J,BI,Res).
+
+set_board(Board,I,J,NewEl,NewBoard) :-
+   get_brd(I,Board,RowI),
+   set_brd(J,RowI,NewEl,NewRowI),
+   set_brd(I,Board,NewRowI,NewBoard).
+  
+get_brd(N,BRD,Res) :- arg(N,BRD,Res).
+
+% setting rows or columns
+set_brd(1,brd(_,C2,C3,C4,C5,C6,C7,C8),New,
+          brd(New,C2,C3,C4,C5,C6,C7,C8)).
+set_brd(2,brd(C1,_,C3,C4,C5,C6,C7,C8),New,
+          brd(C1,New,C3,C4,C5,C6,C7,C8)).
+set_brd(3,brd(C1,C2,_,C4,C5,C6,C7,C8),New,
+          brd(C1,C2,New,C4,C5,C6,C7,C8)).
+set_brd(4,brd(C1,C2,C3,_,C5,C6,C7,C8),New,
+          brd(C1,C2,C3,New,C5,C6,C7,C8)).
+set_brd(5,brd(C1,C2,C3,C4,_,C6,C7,C8),New,
+          brd(C1,C2,C3,C4,New,C6,C7,C8)).
+set_brd(6,brd(C1,C2,C3,C4,C5,_,C7,C8),New,
+          brd(C1,C2,C3,C4,C5,New,C7,C8)).
+set_brd(7,brd(C1,C2,C3,C4,C5,C6,_,C8),New,
+          brd(C1,C2,C3,C4,C5,C6,New,C8)).
+set_brd(8,brd(C1,C2,C3,C4,C5,C6,C7,_),New,
+          brd(C1,C2,C3,C4,C5,C6,C7,New)).
+
+
+get_colour(king(Col),Col).
+get_colour(queen(Col),Col).
+get_colour(rook(Col),Col).
+get_colour(bishop(Col),Col).
+get_colour(knight(Col),Col).
+get_colour(pawn(Col),Col).
+
+% TO DO: store king position separately
+in_check(Board,Colour) :-
+   get_board_any(Board,I,J,king(Colour)),
+   in_check(Board,I,J,Colour).
+in_check(Board,I,J,Colour) :-
+   other_colour(Colour,AttackingColour),
+   is_attacked(Board,I,J,Colour,AttackingColour).
+
+% is_attacked does moves in reverse; we could optimise this; e.g.,
+% merge rook/bishop,king moves
+is_attacked(Board,I,J,_,AttackingColour) :- move_rook(I,J,Board,I2,J2),
+   get_board(Board,I2,J2,AttackingPiece),
+   does_rook_moves(AttackingPiece,AttackingColour).
+is_attacked(Board,I,J,_,AttackingColour) :- move_bishop(I,J,Board,I2,J2),
+   get_board(Board,I2,J2,AttackingPiece),
+   does_bishop_moves(AttackingPiece,AttackingColour).
+is_attacked(Board,I,J,_,AttackingColour) :- move_knight(I,J,I2,J2),
+   get_board(Board,I2,J2,AttackingPiece),
+   AttackingPiece = knight(AttackingColour).
+is_attacked(Board,I,J,_,AttackingColour) :- move_king(I,J,I2,J2),
+   get_board(Board,I2,J2,AttackingPiece),
+   AttackingPiece = king(AttackingColour).
+is_attacked(Board,I,J,Colour,AttackingColour) :-
+   pawn_h_move1(Colour,J,J2), % we move backwards from king to pawn
+   pawn_v_move1(I,I2),
+   get_board(Board,I2,J2,AttackingPiece),
+   AttackingPiece = pawn(AttackingColour).
+
+does_rook_moves(rook(Col),Col).
+does_rook_moves(queen(Col),Col).
+
+does_bishop_moves(bishop(Col),Col).
+does_bishop_moves(queen(Col),Col).
+
+% this captures simple moves, not en passant
+move(Board,Piece,Colour,I,J,I2,J2,Take,NewBoard) :-
+   between(1,8,I), between(1,8,J),
+   get_board(Board,I,J,Piece),
+   get_colour(Piece,Colour),
+   set_board(Board,I,J,empty,Board2),
+   move_piece(Piece,I,J,Board2,I2,J2),
+   get_board(Board2,I2,J2,Piece2),
+   (get_colour(Piece2,Col2)
+      -> Col2 \= Colour,  % we cannot take a piece of our own colour
+         Take = Piece2
+       ; Take = false),
+    check_for_promotion(Piece,J2,NewPiece),
+    set_board(Board2,I2,J2,NewPiece,NewBoard).
+move(Board,king(Colour),Colour,5,Row,3,Row,false,NewBoard) :-
+    % TO DO: remember if king or castle moved 
+    castling_row(Row,Colour),
+    get_board(Board,2,Row,empty),
+    get_board(Board,5,Row,king(Colour)),
+    get_board(Board,1,Row,rook(Colour)),
+    get_board(Board,3,Row,empty),
+    get_board(Board,4,Row,empty),
+    \+ in_check(Board,5,1,Colour),
+    \+ in_check(Board,4,1,Colour),
+    set_board(Board,1,Row,empty,B1),
+    set_board(B1,5,Row,empty,B2),
+    set_board(B2,4,Row,rook(Colour),B3),
+    set_board(B3,3,Row,king(Colour),NewBoard).
+move(Board,king(Colour),Colour,5,Row,7,Row,false,NewBoard) :- castling_row(Row,Colour),
+    get_board(Board,6,Row,empty),
+    get_board(Board,5,Row,king(Colour)),
+    get_board(Board,8,Row,rook(Colour)),
+    get_board(Board,7,Row,empty),
+    \+ in_check(Board,5,1,Colour),
+    \+ in_check(Board,6,1,Colour),
+    set_board(Board,8,Row,empty,B1),
+    set_board(B1,5,Row,empty,B2),
+    set_board(B2,6,Row,rook(Colour),B3),
+    set_board(B3,7,Row,king(Colour),NewBoard).
+
+castling_row(1,white).
+castling_row(8,black).
+
+check_for_promotion(pawn(black),1,NewPiece) :- !, promoted_piece(black,NewPiece).
+check_for_promotion(pawn(white),8,NewPiece) :- !, promoted_piece(white,NewPiece).
+check_for_promotion(Piece,_,Piece).
+
+promoted_piece(Col,queen(Col)).
+promoted_piece(Col,knight(Col)).
+promoted_piece(Col,rook(Col)).
+promoted_piece(Col,bishop(Col)).
+
+
+move_piece(king(_),I,J,_Board2,I2,J2) :-
+   move_king(I,J,I2,J2).
+move_piece(rook(_),I,J,Board2,I2,J2) :-
+   move_rook(I,J,Board2,I2,J2).
+move_piece(knight(_),I,J,_Board2,I2,J2) :-
+   move_knight(I,J,I2,J2).
+move_piece(bishop(_),I,J,Board2,I2,J2) :-
+   move_bishop(I,J,Board2,I2,J2).
+move_piece(queen(_),I,J,Board2,I2,J2) :-
+   move_rook(I,J,Board2,I2,J2).
+move_piece(queen(_),I,J,Board2,I2,J2) :-
+   move_bishop(I,J,Board2,I2,J2).
+move_piece(pawn(Col),I,J,Board2,I2,J2) :-
+   move_pawn(Col,I,J,Board2,I2,J2).
+
+% the moves of a king
+move_king(I,J,I2,J2) :- move_king_hv(I,I2), move_king_hv(J,J2), (I,J) \= (I2,J2).
+
+move_king_hv(I,I2) :- I>1, I2 is I-1.
+move_king_hv(I,I).
+move_king_hv(I,I2) :- I<8, I2 is I+1.
+
+
+move_rook(I,J,Board,I2,J) :- I<8, I1 is I+1, move_hp(I1,J,Board,I2).
+move_rook(I,J,Board,I2,J) :- I>1, I1 is I-1, move_hm(I1,J,Board,I2).
+move_rook(I,J,Board,I,J2) :- J<8, J1 is J+1, move_vp(I,J1,Board,J2).
+move_rook(I,J,Board,I,J2) :- J>1, J1 is J-1, move_vm(I,J1,Board,J2).
+
+% move horizontal plus 1
+move_hp(I,_J,_Board,I).
+move_hp(I1,J,Board,IRes) :- I1<8,
+   get_board(Board,I1,J,empty),
+   I2 is I1+1, move_hp(I2,J,Board,IRes).
+% move horizontal minus 1
+move_hm(I,_J,_Board,I).
+move_hm(I1,J,Board,IRes) :- I1>1,
+   get_board(Board,I1,J,empty),
+   I2 is I1-1, move_hm(I2,J,Board,IRes).
+
+move_vp(_,J,_Board,J).
+move_vp(I,J1,Board,JRes) :- J1<8,
+   get_board(Board,I,J1,empty),
+   J2 is J1+1, move_vp(I,J2,Board,JRes).
+move_vm(_,J,_Board,J).
+move_vm(I,J1,Board,JRes) :- J1>1,
+   get_board(Board,I,J1,empty),
+   J2 is J1-1, move_vm(I,J2,Board,JRes).
+   
+move_bishop(I,J,Board,IRes,JRes) :- (DI = 1 ; DI = -1), (DJ=1 ; DJ = -1),
+   move_bish(I,DI,J,DJ,Board,IRes,JRes).
+
+move_bish(I,DI,J,DJ,Board,IRes,JRes) :- 
+   I1 is I+DI, I>0, I<9,
+   J1 is J+DJ, J>0, J<9,
+   (IRes=I1, JRes=J1
+    ; get_board(Board,I1,J1,empty),
+      move_bish(I1,DI,J1,DJ,Board,IRes,JRes)).
+
+
+move_knight(I,J,I2,J2) :- move2(I,I2),move1(J,J2).
+move_knight(I,J,I2,J2) :- move1(I,I2),move2(J,J2).
+
+move2(I,I2) :- I>2, I2 is I-2.
+move2(I,I2) :- I<7, I2 is I+2.
+move1(I,I2) :- I>1, I2 is I-1.
+move1(I,I2) :- I<8, I2 is I+1.
+
+move_pawn(Col,I,J,Board2,I2,J2) :-
+   (Col=black -> Delta is -1, J>1 ; Delta=1, J<8),
+   % TO DO: pawn promotion
+   move_pawn_aux(Col,Delta,I,J,Board2,I2,J2).
+
+pawn_h_move1(black,J,J1) :- J>1, J1 is J-1.
+pawn_h_move1(white,J,J1) :- J<8, J1 is J+1.
+
+pawn_v_move1(I,I1) :- I>1, I1 is I-1.
+pawn_v_move1(I,I1) :- I<8, I1 is I+1.
+
+pawn_direction(black,-1).
+pawn_direction(white,1).
+
+pawn_origin_row(black,7).
+pawn_origin_row(white,2).
+
+move_pawn_aux(Col,Delta,I,J,Board,I,JRes) :-
+   J1 is J+Delta,
+   get_board(Board,I,J1,empty),
+   (JRes = J1 
+    ; pawn_origin_row(Col,J), % from the origin row we can also advance two squares
+      JRes is J1+Delta,
+      % TO DO: remember virtual pawn at I,J1 for en-passant in next move by other player
+      get_board(Board,I,JRes,empty)).
+move_pawn_aux(Col,Delta,I,J,Board,I1,J1) :-
+   pawn_v_move1(I,I1),
+   J1 is J+Delta,
+   get_board(Board,I1,J1,Fig),
+   get_colour(Fig,OtherCol),
+   other_colour(Col,OtherCol).
+
+% -------------------------------------------
+
+% not used for XTL; can be used to do auto play from command line: sicstus -l chess.P --goal "play."
+play :- play(4).
+play(D) :- start_play(SP), play(SP,D).
+start_play(Pos) :- empty_board(E), set_puzzle(1,Player,E,B), setup_position(Player,B,Pos).
+
+play(Position,Depth) :- 
+   pretty_print(Position),
+   print('THINKING'),nl,
+   statistics(walltime,_),
+   value(Position,Depth,Value,Action,NewBoard),
+   statistics(walltime,[Tot,Delta]),
+   format('Move = ~w, Value=~w, Time: ~w ms (~w ms since start) ~n',[Action,Value,Delta, Tot]),
+   (Value > 250 -> print('WHITE WILL WIN'),nl
+    ; Value < -250 -> print('BLACK WILL WIN'),nl
+   ),
+   (NewBoard=none(_) -> print('FINISHED'),nl
+    ; play(NewBoard,Depth)
+   ).
+
+
+% -------------------------------------------
+% MINIMAX - ALPHA/BETA ENCODING
+% -------------------------------------------
+
+% by Michael Leuschel and Philip Höfges
+
+/**
+  player_worst_outcome_with_depth/3: player would loose
+    +Player: which player?
+    +Depth: current remaining depth?
+    -Value: value of outcome
+*/
+%player_worst_outcome(white,-2000).
+%player_worst_outcome(black,2000).
+:- if(take_depth_into_account(true)).
+% we take the depth into account so that Mini-Max will actually  move towards a check mate
+% and not simply choose arbitrary moves staying in a winning configuration
+player_worst_outcome_with_depth(white,Depth,Res) :- Res is -1250 - Depth*10.
+player_worst_outcome_with_depth(black,Depth,Res) :- Res is 1250 + Depth*10.
+:- else.
+player_worst_outcome_with_depth(white,_Depth,Res) :- Res is -1250.
+player_worst_outcome_with_depth(black,_Depth,Res) :- Res is 1250.
+:- endif.
+
+
+value(Board,Depth,Value,Action,NewBoard) :-
+  player_worst_outcome_with_depth(white,Depth,WW),
+  player_worst_outcome_with_depth(black,Depth,BW),
+  value(Board, (WW, BW), Depth, top_level,Value, Action, NewBoard).
+
+/**
+  value/6: return new value, move and board
+    +Position: position information (min/max, Board)
+    +Borders: (Alpha, Beta) for pruning
+    +Depth: Maximal search depth
+    +TopLevel: is equal to top_level if we are at the top-level of the tree
+    -Value: return value
+    -Action: description of the move
+    -NextPosition: next position (max/min, Neues Board)
+*/
+value(Position, (Alpha, Beta), Depth, TopLevel,Value, Action, NextPosition) :-
+  (Depth<1
+   ->  utility(Position, Value),
+       Action=none, NextPosition=none(Position)
+   ;   Position = pos(Player, _Board,_Info),
+       findall(Action/Succ, move(Position, Action, Succ), List),
+       %print(List),nl,
+      (List = [] 
+        ->  (moving_player_in_check(Position) % CHECK MATE
+             -> player_worst_outcome_with_depth(Player,Depth,Value)
+                % Use 1 instead of Depth to disable taking distance into account
+             ; Value = 0 %utility(Position, Value) % DRAW
+             ),
+            Action=none, NextPosition=none(Position)
+      ; (member(Move/Succ,List),move_takes_king(Move))
+       ->  Succ = pos(BeatenPlayer,_,_),
+           player_worst_outcome_with_depth(BeatenPlayer,Depth,Value),
+           Action=Move, NextPosition=none(Position)
+         ;  player_worst_outcome_with_depth(Player, Depth,IV),
+            D2 is Depth-1,
+            (TopLevel=top_level, randomise_moves(true)
+              -> random_permutation(List,RList)
+               ; List=RList),
+            find_optimal_value(RList, Player, (Alpha, Beta), D2, IV, none/none(Position), 
+                               Value, Action/NextPosition)
+     )
+  ).
+
+/**
+  update_value/7: update accumulator if possible value forces the update
+    +Player: min or max
+    +PVal: possible value
+    +PS: action/position
+    +Acc: old accumulated value
+    +AS: old accumulated move
+    -Upd: new accumulated value
+    -US: new accumulated move
+*/
+update_value(white, PVal, PS, Acc, AS, Upd, US) :-
+   (PVal > Acc -> Upd = PVal,US = PS ; Upd = Acc,US = AS).
+update_value(black, PVal, PS, Acc, AS, Upd, US) :-
+   (PVal < Acc -> Upd = PVal,US = PS ; Upd = Acc,US = AS).
+
+/**
+  update_alpha_beta/4: update alpha beta for both player
+    +Player: max or min
+    +Borders: (Alpha, Beta) as before
+    +Value: value to compare
+    -NBorders: (NAlpha, NBeta) with new values
+*/
+update_alpha_beta(white, (Alpha, Beta), Value, (NAlpha, Beta)) :-
+   NAlpha is max(Alpha, Value).
+update_alpha_beta(black, (Alpha, Beta), Value, (Alpha, NBeta)) :-
+   NBeta is min(Beta, Value).
+
+/**
+  find_optimal_value/8: find the optimal value for the player using minimax and alpha-beta
+    +List: possible moves (findall results)
+    +Player: Player to move
+    +Boders: (Alpha, Beta)
+    +Depth: Current search depth
+    +AccValue: accumulator value
+    +AccMove: accumulator move
+    -ResValue: resulting value
+    -ResMove: resulting move
+*/
+find_optimal_value([], _, (_,_), _, ResValue, ResMove, ResValue, ResMove).
+find_optimal_value([Action/Position|T], Player, (Alpha, Beta), Depth, AccValue, AccMove, ResValue, ResMove) :-
+  value(Position, (Alpha, Beta), Depth, not_top_level,PVal, _, _),
+  update_alpha_beta(Player, (Alpha, Beta), PVal, (NAlpha, NBeta)),
+  update_value(Player, PVal, Action/Position, AccValue, AccMove, NewAccValue, NewAccMove),
+  (NBeta =< NAlpha
+  -> ResMove = NewAccMove, ResValue = NewAccValue
+  ; find_optimal_value(T, Player, (NAlpha, NBeta), Depth, NewAccValue, NewAccMove, ResValue, ResMove)).

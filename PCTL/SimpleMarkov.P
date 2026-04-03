@@ -1,0 +1,58 @@
+start(unlocked).
+trans(lock,unlocked,locked,[probability/0.5]).
+trans(skip,unlocked,unlocked,[probability/0.5]).
+trans(unlock,locked,unlocked,[probability/0.5]).
+trans(deadlock,locked,finished,[probability/0.5]).
+prop(X,X).
+
+% :pctl P>{0.999} [F {finished}]
+%| ?- use_module(extension('markov/dtmc_model_checking.pl')).
+% yes
+% | ?- sat(prob_formula(eq,P,f(p(xtl_predicate_check(finished))))).
+% P = 1.0 ? 
+% yes
+
+/*
+>>> :pctl P={p} [F {finished}]
+Parsing temporal formula,  kind=pctl, lge=none, formula="P={p} [F {finished}]"
+Checking PCTL formula from state 0 : P={p} [F {finished}]
+ AST: probformula(equal,_225537,f(ap(xtl_predicate_check(finished))))
+ Open Probability Variables: [p/_225537]
+PCTL Formula TRUE: P={p} [F {finished}]
+PCTL Solutions: [p/1.0]
+
+
+>>> :pctl not(P={p} [F {finished}])
+Parsing temporal formula,  kind=pctl, lge=none, formula="not(P={p} [F {finished}])"
+Checking PCTL formula from state 0 : not(P={p} [F {finished}])
+ AST: not(probformula(equal,_11035,f(ap(xtl_predicate_check(finished)))))
+ Open Probability Variables: [p/_11035]
+PCTL Formula TRUE: not(P={p} [F {finished}])
+PCTL Solutions: [p/(1.0-2.3E-16)]
+
+>>> :pctl P={p} [F<=5 {finished}]
+Parsing temporal formula,  kind=pctl, lge=none, formula="P={p} [F<=5 {finished}]"
+Checking PCTL formula from state 0 : P={p} [F<=5 {finished}]
+ AST: probformula(equal,_11265,fk(5,ap(xtl_predicate_check(finished))))
+ Open Probability Variables: [p/_11265]
+PCTL Formula TRUE: P={p} [F<=5 {finished}]
+PCTL Solutions: [p/0.59375]
+
+>>> :pctl P={p} [F<=1 {finished}]
+Parsing temporal formula,  kind=pctl, lge=none, formula="P={p} [F<=1 {finished}]"
+Checking PCTL formula from state 0 : P={p} [F<=1 {finished}]
+ AST: probformula(equal,_11719,fk(1,ap(xtl_predicate_check(finished))))
+ Open Probability Variables: [p/_11719]
+PCTL Formula TRUE: P={p} [F<=1 {finished}]
+PCTL Solutions: [p/0.0]
+
+>>> :pctl P={p} [F<=2 {finished}]
+Parsing temporal formula,  kind=pctl, lge=none, formula="P={p} [F<=2 {finished}]"
+Checking PCTL formula from state 0 : P={p} [F<=2 {finished}]
+ AST: probformula(equal,_12173,fk(2,ap(xtl_predicate_check(finished))))
+ Open Probability Variables: [p/_12173]
+PCTL Formula TRUE: P={p} [F<=2 {finished}]
+PCTL Solutions: [p/0.25]
+
+probcli SimpleMarkov.P -mc 10000 -nodead -pctlformulat 'P={0.25} [F<=2 {finished}]'
+*/

@@ -1,0 +1,288 @@
+
+% Connect Four with Monte-Carlo Tree Search and Minimax
+
+:- ensure_loaded('mcts/mcts_core').
+:- ensure_loaded('mcts/auto_player').
+
+:- use_module(library(between)).
+
+
+start(pos(max,E)) :- empty_board(E).
+ %, board_store(2,2,E,max,E2), board_store(1,3,E2,min,E3), board_store(2,1,E3,max,E4), board_store(2,3,E4,min,E5).
+trans(A,P,P3) :- game_move(P,A,P2), normalise(P2,P3).
+%trans(A,P,P3) :- my_random_game_move(P,A,P2), normalise(P2,P3).
+trans(auto_play(Action),State,State2) :- player(State,Player),
+   auto_play_for(Player),
+   format('~nComputing MCTS Move for player=~w~n',[Player]),
+   mcts_auto_play(State,5000,Action,State2),
+   Action \= none.
+trans(auto_play_minimax(Depth,Value,Action),State,State2) :- player(State,Player),
+   enum_depth_for_minimax(Player,Depth),
+   format('~nComputing Alpha-Beta Move for depth=~w and player=~w~n',[Depth,Player]),
+   statistics(walltime,[W1,_]),
+   minimax_auto_play(State,Depth,Value,Action,State2),
+   Action \= none,
+   statistics(walltime,[W2,_]), WTime is W2-W1,
+   format('Alpha-Beta Move found in ~w ms: ~w~n',[WTime,Action]).
+%trans(win,pos(P,B),pos(P,B)) :- win(B,_,max).
+%trans(loose,pos(P,B),pos(P,B)) :- win(B,_,min).
+%trans(test_rowcol(I,J),P,P) :- between(1,7,I), %print(test(I,J)),nl,
+%  between(0,7,J).
+
+trans_prop(place,param_names([i,j,player])).
+trans_prop(auto_play,param_names([action])).
+trans_prop(auto_play_minimax,param_names([depth,value,action])).
+
+auto_mode(min,minimax).
+auto_mode(max,mcts).
+
+% for SimB simulation:
+:- if(auto_mode(min,mcts)).
+auto_play_for(min).
+enum_depth_for_minimax(min,_) :- fail.
+:- endif.
+:- if(auto_mode(min,minimax)).
+auto_play_for(min) :- fail.
+enum_depth_for_minimax(min,2).
+:- endif.
+:- if(auto_mode(min,off)).
+auto_play_for(min) :- fail.
+enum_depth_for_minimax(min,_) :- fail.
+:- endif.
+
+:- if(auto_mode(max,mcts)).
+auto_play_for(max).
+enum_depth_for_minimax(max,_) :- fail.
+:- endif.
+:- if(auto_mode(max,minimax)).
+auto_play_for(max) :- fail.
+enum_depth_for_minimax(max,2).
+:- endif.
+:- if(auto_mode(max,off)).
+auto_play_for(max) :- fail.
+enum_depth_for_minimax(max,_) :- fail.
+:- endif.
+
+% ---------------
+
+
+
+player_worst_outcome_with_depth(P,_Depth,V) :- player_worst_outcome_with_depth(P,V).
+
+utility(P,Val) :- \+ game_move(P,_,_),
+                    heuristic_function_result(P,Val).
+% TODO: provide utility with last move (I,J,Player) info: we only need to look for 4's involving last position
+
+pretty_print_node(pos(P,B)) :- format('~w : ',[P]), portray_board(B).
+% --------------
+
+% for Minimax
+:- compile(minimax_alpha_beta).
+player_worst_outcome_with_depth(max,X) :- X is -1.
+player_worst_outcome_with_depth(min,1).
+utility(P,_Depth,Val) :-  % utility as used by Minimax; also called for non-terminal nodes
+  heuristic_function_result(P,Val).
+
+% --------------
+
+
+game_move(pos(Player,Board),place(I,J,Piece),pos(OP,B3)) :- 
+   other_player(Player,Piece,OP),
+   \+ is_winning_board(Board,_),
+   between(1,7,I),
+   find_free_slot(I,Board,1,J),
+   board_store(I,J,Board,Player,B2),
+   update_winner_after_move(B2,I,J,Player,B3).
+
+% a variation which tries out moves in random order
+random_game_move(pos(Player,Board),place(I,J,Piece),pos(OP,B3)) :- 
+   other_player(Player,Piece,OP),
+   \+ is_winning_board(Board,_),
+   random_generate(I,[1,2,3,4,5,6,7]),
+   find_free_slot(I,Board,1,J),
+   board_store(I,J,Board,Player,B2),
+   update_winner_after_move(B2,I,J,Player,B3).
+
+:- use_module(library(random),[random_permutation/2, random_select/3]).
+random_generate(I,List) :- random_select(El,List,Rest),!,
+   (I=El ; random_generate(I,Rest)).
+
+random_between(I) :-
+   random_permutation([1,2,3,4,5,6,7],Perm),
+   member(I,Perm).
+
+find_free_slot(I,Board,J,Res) :- board_fetch(I,J,Board,_), !, % position already occupied
+   J>1, % if J=1 the column is full
+   Res is J-1.
+find_free_slot(I,Board,J,Res) :- J<6, !, % we have not reached bottom yet
+   J1 is J+1, find_free_slot(I,Board,J1,Res).
+find_free_slot(_I,_Board,R,R). % we reached bottom
+
+% get the player to move from the current state:
+player(pos(Player,_Board),Player).
+
+% --------------
+% Board Management
+% I between 1 and 7
+% J between 1 and 6
+
+:- if(1=2).
+:- use_module(library(avl)).
+empty_board(B) :- empty_avl(B).
+normalise(pos(P,B),pos(P,NB)) :- avl_to_list(B,L), ord_list_to_avl(L,NB).
+
+board_fetch(I,J,Board,Player) :- avl_fetch(bpos(I,J),Board,Player).
+board_store(I,J,Board,Player,NewBoard) :- 
+   avl_store(bpos(I,J),Board,Player,NewBoard).
+
+board_store_winner(Board,Player,NewBoard) :- avl_store(winner,Board,Player,NewBoard).
+board_get_winner(Board,Player) :- avl_fetch(winner,Board,Player).
+
+portray_board(B) :- portray_avl(B).
+:- else.
+:- use_module(library(lists),[maplist/2,nth1/4]).
+empty_board(board(C1,C2,C3,C4,C5,C6,C7,no_winner)) :- 
+    maplist(empty_col,[C1,C2,C3,C4,C5,C6,C7]).
+empty_col(col(e__,e__,e__,e__,e__,e__)).
+normalise(A,A).
+board_fetch(I,J,Board,Player) :- I<8,
+    arg(I,Board,Col), arg(J,Col,Player), Player \= e__.
+board_store(I,J,Board,Player,NewBoard) :- 
+    arg_update(I,Board,Col,NewCol,NewBoard),
+    arg_update(J,Col,_,Player,NewCol).
+    
+arg_update(I,Term,OldArg,NewArg,NewTerm) :-
+    Term =.. [F|OldCols],
+    nth1(I,OldCols,OldArg,RestCols),
+    nth1(I,NewCols,NewArg,RestCols),
+    NewTerm =.. [F|NewCols].
+
+board_store_winner(board(C1,C2,C3,C4,C5,C6,C7,_),Player,
+                   board(C1,C2,C3,C4,C5,C6,C7,Player)).
+
+board_get_winner(Board,_) :-
+    functor(Board,F,_), F \= board,!,
+   add_error(connect4,'Illegal board: ',Board),fail.
+board_get_winner(Board,Player) :-
+    arg(8,Board,Player),
+    Player \= no_winner.
+
+portray_board1(B) :- print(B).
+print_col(A) :- print(A),nl.
+portray_board(B) :- 
+    B =.. [_|Args], nl, maplist(print_col,Args).
+:- endif.
+
+is_winning_position(pos(_,Board),WinPlayer) :- !, is_winning_board(Board,WinPlayer).
+is_winning_position(POS,_) :- add_error(connect4,'Illegal position: ',POS),fail.
+
+is_winning_board(Board,WinPlayer) :- !, board_get_winner(Board,WinPlayer).
+
+% -----------------
+  
+other_player(max,red,min).
+other_player(min,yellow,max).
+
+prop(pos(_,B),'='('WINNER'(Reason),P)) :- win(B,Reason,P).
+prop(pos(P,_B),'='('TO_MOVE',P)).
+prop(P,'='('HEURISTIC',V)) :- heuristic_function_result(P,V).
+prop(pos(_,B),'='(board(I,J),P)) :- get_board(I,J,B,P).
+
+nr_state_properties(45).
+
+% find four in a row starting from (I,J) und using offsets
+% DeltaI is either 1 or 0
+% DeltaJ is either 1,0,-1
+four_in_row(I,J,DeltaI,DeltaJ,B,Player) :-
+   (DeltaI=1 -> between(1,4,I) ; between(1,7,I)),
+   (DeltaJ=1 -> between(1,3,J) ; DeltaJ = -1 -> between(4,6,J) ; between(1,6,J)),
+   board_fetch(I,J,B,Player),
+   I2 is I+DeltaI, J2 is J+DeltaJ, board_fetch(I2,J2,B,Player),
+   I3 is I2+DeltaI, J3 is J2+DeltaJ, board_fetch(I3,J3,B,Player),
+   I4 is I3+DeltaI, J4 is J3+DeltaJ, board_fetch(I4,J4,B,Player).
+
+win(B,row(I,J),Player) :- four_in_row(I,J,1,0,B,Player).
+win(B,col(I,J),Player) :- four_in_row(I,J,0,1,B,Player).
+win(B,diagonal1(I,J),Player) :- four_in_row(I,J,1,1,B,Player).
+win(B,diagonal2(I,J),Player) :- four_in_row(I,J,1,-1,B,Player).
+
+get_board(I,J,B,Player) :- between(1,7,I), between(1,6,J),
+   (board_fetch(I,J,B,P) -> Player=P ; Player=empty).
+
+
+heuristic_function_result(pos(_,B),Val) :- 
+  (is_winning_board(B,P) -> val(P,Val) ; Val=0).
+val(min,X) :- X is -1.
+val(max,1).
+heuristic_function_active.
+
+% --------------------------
+
+% update winner info after a move
+update_winner_after_move(Board,I,J,Player,NewBoard) :- check_player(Player),
+   %print(check_win(I,J,Player)),nl, portray_board(Board),
+   win_after_move(Board,I,J,Player,_Reason),!,
+   % print(winner(I,J,Player,_Reason)),nl,
+   board_store_winner(Board,Player,NewBoard).
+update_winner_after_move(Board,_,_,_,Board).
+
+check_player(min) :- !.
+check_player(max) :- !.
+check_player(X) :- print(unknown_player(X)),nl.
+
+
+% check if there is a win for Player after putting a new piece at (I,J)
+% under the assumption that there was no win before the piece was put there
+win_after_move(Board,I,J,Player,col) :- J<4,
+   J1 is J+1,
+   board_fetch(I,J1,Board,Player),
+   J2 is J1+1,
+   board_fetch(I,J2,Board,Player),
+   J3 is J2+1,
+   board_fetch(I,J3,Board,Player).
+win_after_move(Board,I,J,Player,Reason) :-
+   offsets(Reason,Oi1,Oj1,Oi2,Oj2),
+   count_same(I,J,Oi1,Oj1,Board,Player,0,CountRight),
+   count_same(I,J,Oi2,Oj2,Board,Player,0,CountLeft),
+   %print(count(Reason,Player,CountRight,CountLeft)),nl, print(Board),nl,
+   CountRight+CountLeft+1 >= 4.
+
+offsets(row,1,0,-1,0).
+offsets(diagonal1,1,-1,-1,1).
+offsets(diagonal2,1,1,-1,-1).
+
+% count how many positions we find with same Player in some directions specified by the offsets
+count_same(I,J,OffsetI,OffsetJ,Board,Player,Acc,Count) :-
+   I1 is I + OffsetI,
+   J1 is J + OffsetJ,
+   board_fetch(I1,J1,Board,Player),!,
+   Acc1 is Acc+1,
+   count_same(I1,J1,OffsetI,OffsetJ,Board,Player,Acc1,Count).
+count_same(_I,_J,_OffsetI,_OffsetJ,_Board,_Player,Acc,Acc).
+
+
+% --------------------------
+
+animation_function_result(pos(_,Board),Matrix2) :-
+         findall(((J1,I1),Img),
+             (get_board(I,J,Board,Value),
+              animation_image(Value,Img,_), I1 is I, J1 is J
+              ),Matrix2).
+
+animation_image_right_click_transition(_Row,Col,place(Col,_,_)).
+%animation_image_right_click_transition(Row,Col,test_rowcol(Row,Col)).
+animation_image_right_click_transition(_Row,_Col,auto_play(_)).
+
+animation_image_click_transition(_Row,Col,_,_,[place(Col,_,_),auto_play(A)],4) :- dif(A,none).
+
+animation_image(Nr,S) :- animation_image(_,Nr,S).
+animation_image(empty,1,   'images/sm_O_light.gif').
+animation_image(max,2,   'images/sm_O_red.gif').
+animation_image(min,3,   'images/sm_O_yellow.gif').
+animation_image(drag,4,   'images/sm_gray_box.gif').
+
+
+prob_pragma_string('SET_PREF_TIME_OUT',10000).
+%prob_pragma_string('VISB_JSON_FILE','connect4_visb.json').
+prob_pragma_string('VISB_DEFINITIONS_FILE','connect4_visb.def').
+

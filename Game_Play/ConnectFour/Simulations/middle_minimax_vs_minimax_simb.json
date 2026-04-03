@@ -1,0 +1,35 @@
+{
+  "activations": [
+    {
+      "id": "start_xtl_system",
+      "execute": "start_xtl_system",
+      "activating": ["first_move"]
+  },
+  {
+    "id": "first_move",
+    "execute": "place",
+    "after": 10,
+    "fixedVariables": {
+      "i": "STRING_TO_TERM(\"4\")",
+      "j": "STRING_TO_TERM(\"6\")",
+      "player": "STRING_TO_TERM(\"red\")"
+    },
+    "activating": ["auto_play_minimax"]
+  },
+    {
+      "id": "auto_play_minimax",
+      "execute": "auto_play_minimax",
+      "after": 10,
+      "activating": ["auto_play_minimax"]
+    }
+  ],
+  "metadata": {
+    "fileType": "Simulation",
+    "formatVersion": 4,
+    "savedAt": "2025-10-27T08:26:58.373748Z",
+    "creator": "User",
+    "proB2KernelVersion": "4.15.1-SNAPSHOT",
+    "proBCliVersion": "1.15.1-nightly (b40648bf0549d89970cc469b0a1f98ca89b01923)",
+    "modelName": null
+  }
+}

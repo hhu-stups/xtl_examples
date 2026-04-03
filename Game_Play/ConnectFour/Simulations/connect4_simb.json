@@ -1,0 +1,39 @@
+{
+  "activations": [
+    {
+      "id": "start_xtl_system",
+      "execute": "start_xtl_system",
+      "activating": [
+        "auto_play",
+        "place"
+      ]
+    },
+    {
+      "id": "auto_play",
+      "execute": "auto_play",
+      "after": "100",
+      "activating": [
+        "auto_play",
+        "place"
+      ]
+    },
+    {
+      "id": "place",
+      "execute": "place",
+      "after": "100",
+      "activating": [
+        "auto_play",
+        "place"
+      ]
+    }
+  ],
+  "metadata": {
+    "fileType": "Simulation",
+    "formatVersion": 4,
+    "savedAt": "2025-11-13T12:26:00.910122Z",
+    "creator": "User",
+    "proB2KernelVersion": "4.15.1-SNAPSHOT",
+    "proBCliVersion": "1.15.1-nightly (a2d3000526850437f9e830379efbd5d249e39eda)",
+    "modelName": null
+  }
+}
