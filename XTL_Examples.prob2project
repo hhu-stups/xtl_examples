@@ -1,0 +1,102 @@
+{
+  "name": "XTL_Examples",
+  "description": "",
+  "machines": [
+    {
+      "name": "SimpleMarkov",
+      "description": "",
+      "location": "PCTL/SimpleMarkov.P",
+      "lastUsedPreferenceName": "default",
+      "validationTasks": [],
+      "ltlPatterns": [],
+      "simulations": [],
+      "visBVisualisations": []
+    },
+    {
+      "name": "trafficLight",
+      "description": "",
+      "location": "Traffic_Light/trafficLight.P",
+      "lastUsedPreferenceName": "default",
+      "validationTasks": [],
+      "ltlPatterns": [],
+      "simulations": [],
+      "visBVisualisations": [
+        ""
+      ]
+    },
+    {
+      "name": "Connect4_mcts",
+      "description": "",
+      "location": "Game_Play/ConnectFour/Connect4_mcts.P",
+      "lastUsedPreferenceName": "default",
+      "validationTasks": [],
+      "ltlPatterns": [],
+      "simulations": [
+        {
+          "path": "Game_Play/ConnectFour/Simulations/connect4_simb.json"
+        },
+        {
+          "path": "Game_Play/ConnectFour/Simulations/connect4_simb_interactive.json"
+        }
+      ],
+      "visBVisualisations": [
+        ""
+      ]
+    },
+    {
+      "name": "chess",
+      "description": "",
+      "location": "Game_Play/Chess/chess.P",
+      "lastUsedPreferenceName": "default",
+      "validationTasks": [],
+      "ltlPatterns": [],
+      "simulations": [
+        {
+          "path": "Game_Play/Chess/chess_simb_interactive.json"
+        },
+        {
+          "path": "Game_Play/Chess/chess_simb_random.json"
+        },
+        {
+          "path": "Game_Play/Chess/chess_simb.json"
+        }
+      ],
+      "visBVisualisations": []
+    },
+    {
+      "name": "TicTacToe",
+      "description": "",
+      "location": "Game_Play/TicTacToe/TicTacToe.P",
+      "lastUsedPreferenceName": "default",
+      "validationTasks": [],
+      "ltlPatterns": [],
+      "simulations": [],
+      "visBVisualisations": []
+    },
+    {
+      "name": "TicTacToe_mcts",
+      "description": "",
+      "location": "Game_Play/TicTacToe/TicTacToe_mcts.P",
+      "lastUsedPreferenceName": "default",
+      "validationTasks": [],
+      "ltlPatterns": [],
+      "simulations": [
+        {
+          "path": "Game_Play/TicTacToe/TicTacToe_simb_interactive.json"
+        }
+      ],
+      "visBVisualisations": []
+    }
+  ],
+  "requirements": [],
+  "preferences": [],
+  "metadata": {
+    "fileType": "Project",
+    "formatVersion": 57,
+    "savedAt": "2026-04-03T15:58:38.334817Z",
+    "creator": "User",
+    "proB2KernelVersion": "4.15.2-SNAPSHOT",
+    "proBCliVersion": null,
+    "modelName": null
+  }
+}

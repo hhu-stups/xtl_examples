@@ -1,66 +1,58 @@
 :- use_module(library(avl)).
 :- use_module(library(between)).
-
-% TIC-TAC-TOE with Monte-Carlo Tree Search
-
-:- ensure_loaded('../mcts/mcts_core').
-% requires start/1, game_move/3, utility/2, pretty_print_node/1
+:- compile('../minimax_alpha_beta').
 
 start(pos(max,E)) :- empty_avl(E).
  %, avl_store((2,2),E,max,E2), avl_store((1,3),E2,min,E3), avl_store((2,1),E3,max,E4), avl_store((2,3),E4,min,E5).
 trans(A,P,P3) :- game_move(P,A,P2), normalise(P2,P3).
-trans(auto_play(Action),State,State2) :- player(State,Player),
+trans(auto_play(Depth,Value,Action),State,State2) :- player(State,Player),
    auto_play_for(Player),
-   format('~nComputing MCTS Move for player=~w~n',[Player]),
-   mcts_auto_play(State,5000,Action,State2).
+   enum_depth(Depth),
+   format('~nComputing Alpha-Beta Move for depth=~w and player=~w~n',[Depth,Player]),
+   statistics(walltime,_),
+   (minimax_value(State,Depth,Value,Action,State2)
+    -> statistics(walltime,[_,Delta]),
+       format('Move found in ~w ms: ~w, value=~w~n',[Delta,Action,Value])).
 %trans(win,pos(P,B),pos(P,B)) :- win(B,_,max).
 %trans(loose,pos(P,B),pos(P,B)) :- win(B,_,min).
 
-trans_prop(auto_play,param_names([action])).
-
-%auto_play_for(_) :- fail.
 auto_play_for(min).
-%auto_play_for(max).
+auto_play_for(max).
+%enum_depth(2).
+enum_depth(9).
 
 normalise(pos(P,B),pos(P,NB)) :- avl_to_list(B,L), ord_list_to_avl(L,NB).
 
-utility(P,Val) :- \+ game_move(P,_,_),
-                    heuristic_function_result(P,Val).
+:-if(1=2).
+% normal game_value
+player_worst_outcome_with_depth(P,_Depth,V) :- player_worst_outcome_wo_depth(P,V).
+utility(P,_Depth,Val) :- heuristic_function_result(P,Val).
+:-else.
+% use the following lines to take distance to win/loss into account (slows down mini-max slightly)
+player_worst_outcome_with_depth(P,Depth,W) :- player_worst_outcome_wo_depth(P,V), W is V*Depth.
+utility(P,Depth,Val) :- 
+   heuristic_function_result(P,HV),
+   Val is HV*Depth. % the higher the remaining search depth, the better the win/loss
+:- endif.
+
+player_worst_outcome_wo_depth(max,X) :- X is -1.
+player_worst_outcome_wo_depth(min,1).
 
 
 game_move(pos(P,B),place(I,J,Piece),pos(OP,B2)) :- 
-   other_player(P,Piece,OP),
-   \+ win(B,_,_),
+   other_player(P,Piece,OP), \+ win(B,_,OP),
    between(1,3,I), between(1,3,J),
-   place_at(B,I,J,P,B2).
-
-place_at(Board,I,J,Player,NewBoard) :- 
-   \+ avl_fetch((I,J),Board,_),
-   avl_store((I,J),Board,Player,NewBoard).
+   \+ avl_fetch((I,J),B,_),
+   avl_store((I,J),B,P,B2).
 
 player(pos(P,B),P).
 
 
-:- use_module(library(random),[random/3]).
-% random move for mcts search
-random_game_move(pos(P,B),place(I,J,Piece),pos(OP,B2)) :- 
-   other_player(P,Piece,OP),
-   \+ win(B,_,_),
-   random_between(I),
-   random_between(J),
-   place_at(B,I,J,P,B2).
-
-:- use_module(library(random),[random_permutation/2]).
-
-random_between(I) :-
-   random_permutation([1,2,3],Perm),
-   member(I,Perm).
 % -----------------
   
 other_player(max,cross,min).
 other_player(min,circle,max).
 
-prop(P, 'TERMINAL') :- terminal(P).
 prop(pos(P,B),'='('TO_MOVE',P)).
 prop(pos(_,B),'='(board(I,J),P)) :- get_board(I,J,B,P).
 prop(pos(_,B),'='('WINNER'(Reason),P)) :- win(B,Reason,P).
@@ -95,9 +87,9 @@ animation_function_result(pos(_,Board),Matrix2) :-
               ),Matrix2).
 
 animation_image_right_click_transition(I,J,place(I,J,_)).
-animation_image_right_click_transition(I,J,auto_play(_)).
+animation_image_right_click_transition(I,J,auto_play(_,_,_)).
 
-animation_image_click_transition(I,J,I,J,[place(I,J,_),auto_play(A)],4) :- dif(A,none).
+animation_image_click_transition(I,J,I,J,[place(I,J,_),auto_play(_,_,A)],4) :- dif(A,none).
 
 animation_image(Nr,S) :- animation_image(_,Nr,S).
 animation_image(empty,1,   'images/sm_empty_box.gif').
@@ -105,6 +97,22 @@ animation_image(max,2,   'images/sm_X.gif').
 animation_image(min,3,   'images/sm_O.gif').
 animation_image(drag,4,   'images/sm_gray_box.gif').
 
-% for mcts_runner
-pretty_print_node(pos(P,B)) :- format('~w : ',[P]), portray_avl(B).
+
+/*
+
+STATES
+open:0
+live:22595
+deadlocked:9322
+total:31917
+TOTAL_OPERATIONS
+60626
+COVERED_OPERATIONS
+place:60625
+start_xtl_system:1
+UNCOVERED_OPERATIONS
+
+*/
+
+
   

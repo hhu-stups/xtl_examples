@@ -9,8 +9,8 @@ use_mcts_api(false).
 use_directed_mc(false). % try and find goal_position
 
 % comment out if you want auto_play moves to be computed for certain states only
-auto_play_for(_) :- fail.
-%auto_play_for(white).
+%auto_play_for(_) :- fail.
+auto_play_for(white).
 %auto_play_for(black).
 
 % comment out/in the Mini-Max depths that should be computed:
@@ -270,38 +270,38 @@ prob_game_info('GAME_MCTS_RUNS',_,V) :- V=100.
 % XTL TK State Viewer Animation Images and Functions
 % first pieces on white background
 animation_image(Nr,S) :- animation_image(_,_,Nr,S).
-animation_image(king(white),0,1,   '../B/Puzzles/Queens/ChessPieces/Chess_kll45.gif').
-animation_image(king(black),0,2,   '../B/Puzzles/Queens/ChessPieces/Chess_kdl45.gif').
-animation_image(rook(white),0,3,   '../B/Puzzles/Queens/ChessPieces/Chess_rll45.gif').
-animation_image(rook(black),0,4,   '../B/Puzzles/Queens/ChessPieces/Chess_rdl45.gif').
-animation_image(empty,0,5,         '../B/Puzzles/Queens/ChessPieces/Chess_emptyl45.gif').
-animation_image(knight(white),0,6, '../B/Puzzles/Queens/ChessPieces/Chess_nll45.gif').
-animation_image(knight(black),0,7, '../B/Puzzles/Queens/ChessPieces/Chess_ndl45.gif').
-animation_image(pawn(white),0,8,   '../B/Puzzles/Queens/ChessPieces/Chess_pll45.gif').
-animation_image(pawn(black),0,9,   '../B/Puzzles/Queens/ChessPieces/Chess_pdl45.gif').
-animation_image(queen(white),0,10, '../B/Puzzles/Queens/ChessPieces/Chess_qll45.gif').
-animation_image(queen(black),0,11, '../B/Puzzles/Queens/ChessPieces/Chess_qdl45.gif').
-animation_image(bishop(white),0,12,'../B/Puzzles/Queens/ChessPieces/Chess_bll45.gif').
-animation_image(bishop(black),0,13,'../B/Puzzles/Queens/ChessPieces/Chess_bdl45.gif').
+animation_image(king(white),0,1,   'ChessPieces/Chess_kll45.gif').
+animation_image(king(black),0,2,   'ChessPieces/Chess_kdl45.gif').
+animation_image(rook(white),0,3,   'ChessPieces/Chess_rll45.gif').
+animation_image(rook(black),0,4,   'ChessPieces/Chess_rdl45.gif').
+animation_image(empty,0,5,         'ChessPieces/Chess_emptyl45.gif').
+animation_image(knight(white),0,6, 'ChessPieces/Chess_nll45.gif').
+animation_image(knight(black),0,7, 'ChessPieces/Chess_ndl45.gif').
+animation_image(pawn(white),0,8,   'ChessPieces/Chess_pll45.gif').
+animation_image(pawn(black),0,9,   'ChessPieces/Chess_pdl45.gif').
+animation_image(queen(white),0,10, 'ChessPieces/Chess_qll45.gif').
+animation_image(queen(black),0,11, 'ChessPieces/Chess_qdl45.gif').
+animation_image(bishop(white),0,12,'ChessPieces/Chess_bll45.gif').
+animation_image(bishop(black),0,13,'ChessPieces/Chess_bdl45.gif').
 % now pieces on black background
-animation_image(king(white),1,21,'../B/Puzzles/Queens/ChessPieces/Chess_kld45.gif').
-animation_image(king(black),1,22,'../B/Puzzles/Queens/ChessPieces/Chess_kdd45.gif').
-animation_image(rook(white),1,23,'../B/Puzzles/Queens/ChessPieces/Chess_rld45.gif').
-animation_image(rook(black),1,24,'../B/Puzzles/Queens/ChessPieces/Chess_rdd45.gif').
-animation_image(empty,1,25,'../B/Puzzles/Queens/ChessPieces/Chess_emptyd45.gif').
-animation_image(knight(white),1,26,'../B/Puzzles/Queens/ChessPieces/Chess_nld45.gif').
-animation_image(knight(black),1,27,'../B/Puzzles/Queens/ChessPieces/Chess_ndd45.gif').
-animation_image(pawn(white),1,28,'../B/Puzzles/Queens/ChessPieces/Chess_pld45.gif').
-animation_image(pawn(black),1,29,'../B/Puzzles/Queens/ChessPieces/Chess_pdd45.gif').
-animation_image(queen(white),1,30,'../B/Puzzles/Queens/ChessPieces/Chess_qld45.gif').
-animation_image(queen(black),1,31,'../B/Puzzles/Queens/ChessPieces/Chess_qdd45.gif').
-animation_image(bishop(white),1,32,'../B/Puzzles/Queens/ChessPieces/Chess_bld45.gif').
-animation_image(bishop(black),1,33,'../B/Puzzles/Queens/ChessPieces/Chess_bdd45.gif').
+animation_image(king(white),1,21,'ChessPieces/Chess_kld45.gif').
+animation_image(king(black),1,22,'ChessPieces/Chess_kdd45.gif').
+animation_image(rook(white),1,23,'ChessPieces/Chess_rld45.gif').
+animation_image(rook(black),1,24,'ChessPieces/Chess_rdd45.gif').
+animation_image(empty,1,25,'ChessPieces/Chess_emptyd45.gif').
+animation_image(knight(white),1,26,'ChessPieces/Chess_nld45.gif').
+animation_image(knight(black),1,27,'ChessPieces/Chess_ndd45.gif').
+animation_image(pawn(white),1,28,'ChessPieces/Chess_pld45.gif').
+animation_image(pawn(black),1,29,'ChessPieces/Chess_pdd45.gif').
+animation_image(queen(white),1,30,'ChessPieces/Chess_qld45.gif').
+animation_image(queen(black),1,31,'ChessPieces/Chess_qdd45.gif').
+animation_image(bishop(white),1,32,'ChessPieces/Chess_bld45.gif').
+animation_image(bishop(black),1,33,'ChessPieces/Chess_bdd45.gif').
 % special images:
-%animation_image(king_in_check(_),0,40,'../B/Puzzles/Queens/ChessPieces/Chess_krl45.gif').
-%animation_image(king_in_check(_),1,40,'../B/Puzzles/Queens/ChessPieces/Chess_krd45.gif').
-animation_image(select,_,-1,'../B/Puzzles/Queens/ChessPieces/Chess_emptyg45.gif'). % empty green
-animation_image(select_take,_,-2,'../B/Puzzles/Queens/ChessPieces/Chess_emptyXg45.gif'). % empty green
+%animation_image(king_in_check(_),0,40,'ChessPieces/Chess_krl45.gif').
+%animation_image(king_in_check(_),1,40,'ChessPieces/Chess_krd45.gif').
+animation_image(select,_,-1,'ChessPieces/Chess_emptyg45.gif'). % empty green
+animation_image(select_take,_,-2,'ChessPieces/Chess_emptyXg45.gif'). % empty green
 %   SET_PREF_TK_CUSTOM_STATE_VIEW_PADDING == 1;
 
 xget_animation_image(king(Player),pos(Player,Board,Info),Mod,Img) :- % use red king if in check
