@@ -1,0 +1,24 @@
+DEFINITIONS
+   "LibraryMeta.def";
+   nrcols == 7;
+   nrrows == [6,6,6,6,6,6,6];
+
+   VISB_SVG_FILE == "";
+   VISB_SVG_BOX == rec(height:nrrows(1)*10, width:nrcols*10);
+
+   VISB_SVG_OBJECTS1 == {x,y • x : 1..nrcols & y : 1..nrrows(x) | FIELD(x,y)};
+
+   FIELD(x,y) == (
+       rec(`id`:```grid${x}_${y}```, svg_class:"rect",
+           x: 10*(x-1), y: 10*(y-1),
+           width:10, height:10,
+           stroke:"black", `stroke-width`: 0.25, fill:"white",
+           event:"place", predicate: ```i = STRING_TO_TERM("${x}") & j = STRING_TO_TERM("${y}") & player : {STRING_TO_TERM("red"),STRING_TO_TERM("yellow")}```,
+           hovers: rec(`stroke-width`:0.5)),
+       rec(`id`:```piece${x}_${y}```, svg_class:"circle",
+           cx: 5+10*(x-1), cy: 5+10*(y-1), r: 4.5,
+           stroke:"black", `stroke-width`: 0.25, opacity:1.0,
+           fill: IF STATE_PROPERTY(```board(${x},${y})```) = "max" THEN "red" ELSIF STATE_PROPERTY(```board(${x},${y})```) = "min"  THEN "yellow" ELSE "white" END, 
+           event:"place", predicate: ```i = STRING_TO_TERM("${x}") & j = STRING_TO_TERM("${y}") & player : {STRING_TO_TERM("red"),STRING_TO_TERM("yellow")}```,
+           hovers: rec(opacity:0.5)
+       ));
