@@ -6,7 +6,7 @@ This repository contains examples for the Prolog animation mode of ProB.
 
 Download the latest version of ProB2-UI (https://prob.hhu.de/w/index.php?title=Download) and open the project `XTL_Examples.prob2project`.
 
-You should see the available models on the right-hand side. By double clicking on a model, it is loaded into the animator. Available transitions can be selected at the top left. Visualisations are shown at the bottom centre. To play a
+You should see the available models on the right-hand side. By double clicking on a model, it is loaded into the animator. Available transitions can be selected at the top left. Visualisations are shown at the bottom centre.
 
 #### Play a Game
 
