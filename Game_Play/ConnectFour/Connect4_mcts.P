@@ -1,8 +1,8 @@
 
 % Connect Four with Monte-Carlo Tree Search and Minimax
 
-:- ensure_loaded('mcts/mcts_core').
-:- ensure_loaded('mcts/auto_player').
+:- ensure_loaded('../mcts/mcts_core').
+:- ensure_loaded('../mcts/auto_player').
 
 :- use_module(library(between)).
 
