@@ -77,7 +77,7 @@ pretty_print_node(pos(P,B)) :- format('~w : ',[P]), portray_board(B).
 % --------------
 
 % for Minimax
-:- compile(minimax_alpha_beta).
+:- compile('../minimax_alpha_beta').
 player_worst_outcome_with_depth(max,X) :- X is -1.
 player_worst_outcome_with_depth(min,1).
 utility(P,_Depth,Val) :-  % utility as used by Minimax; also called for non-terminal nodes
